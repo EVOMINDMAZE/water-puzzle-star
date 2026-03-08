@@ -15,12 +15,14 @@ const { chromium } = require('playwright');
   const base = await page.evaluate(() => {
     const analytics = window.AnalyticsSystem;
     const trayBtn = Boolean(document.querySelector('#top-utilities-tray .feedback-entry-btn'));
+    const fabBtn = Boolean(document.getElementById('feedback-fab'));
     const consentBtn = Boolean(document.querySelector('#top-utilities-tray .analytics-consent-btn'));
     const events = analytics.getEvents();
     const hasAcq = events.some((e) => e.eventType === 'acquisition_attributed');
     const hasPlayerId = typeof analytics.playerId === 'string' && analytics.playerId.length > 8;
     return {
       trayBtn,
+      fabBtn,
       consentBtn,
       hasAcq,
       hasPlayerId,
@@ -29,17 +31,22 @@ const { chromium } = require('playwright');
   });
 
   push('Feedback button exists in utility tray', base.trayBtn, JSON.stringify(base));
+  push('Feedback floating button exists', base.fabBtn, JSON.stringify(base));
   push('Consent toggle exists in utility tray', base.consentBtn, JSON.stringify(base));
   push('Acquisition event emitted', base.hasAcq, JSON.stringify(base));
   push('Player ID generated', base.hasPlayerId, JSON.stringify(base));
 
-  const feedbackFlow = await page.evaluate(async () => {
+  await page.click('#feedback-fab');
+  await page.waitForTimeout(250);
+  await page.click('#feedback-stars .feedback-star-btn[data-value="5"]');
+  await page.check('#feedback-modal .feedback-tags input[value="difficulty"]');
+  await page.check('#feedback-modal .feedback-tags input[value="ui"]');
+  await page.fill('#feedback-message', 'Great puzzle loop');
+  await page.click('#feedback-submit');
+  await page.waitForTimeout(250);
+
+  const feedbackFlow = await page.evaluate(() => {
     const analytics = window.AnalyticsSystem;
-    const prompts = ['5', 'difficulty,ui', 'Great puzzle loop'];
-    const oldPrompt = window.prompt;
-    window.prompt = () => prompts.shift() || '';
-    await analytics.openFeedbackFlow('test_runner');
-    window.prompt = oldPrompt;
     const events = analytics.getEvents();
     const rating = events.find((e) => e.eventType === 'rating_submitted');
     const feedback = events.find((e) => e.eventType === 'feedback_submitted');

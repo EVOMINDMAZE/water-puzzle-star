@@ -55,7 +55,8 @@ class AnalyticsSystem {
       queue: 'water_puzzle_analytics_queue_v1',
       consent: 'water_puzzle_analytics_consent_v1',
       attribution: 'water_puzzle_attribution_v1',
-      feedbackPromptState: 'water_puzzle_feedback_prompt_v1'
+      feedbackPromptState: 'water_puzzle_feedback_prompt_v1',
+      feedbackSubmitted: 'water_puzzle_feedback_submitted_v1'
     };
     this.playerId = this.ensurePlayerId();
     this.sessionId = `analytics_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
@@ -373,6 +374,8 @@ class AnalyticsSystem {
   setupFeedbackEntry() {
     const utilityTray = document.getElementById('top-utilities-tray');
     if (!utilityTray) return;
+    this.injectFeedbackStyles();
+    this.ensureFeedbackModal();
     if (!utilityTray.querySelector('.feedback-entry-btn')) {
       const feedbackButton = document.createElement('button');
       feedbackButton.type = 'button';
@@ -381,6 +384,19 @@ class AnalyticsSystem {
       feedbackButton.innerHTML = '<span class="hud-label">Feedback</span><span class="hud-value">★</span>';
       feedbackButton.addEventListener('click', () => this.openFeedbackFlow('manual_button'));
       utilityTray.appendChild(feedbackButton);
+    }
+    if (!document.getElementById('feedback-fab')) {
+      const feedbackFab = document.createElement('button');
+      feedbackFab.type = 'button';
+      feedbackFab.id = 'feedback-fab';
+      feedbackFab.className = 'feedback-fab';
+      feedbackFab.setAttribute('aria-label', 'Share quick feedback');
+      feedbackFab.innerHTML = '<span class="feedback-fab-icon">💬</span><span class="feedback-fab-text">Feedback</span>';
+      feedbackFab.addEventListener('click', () => this.openFeedbackFlow('floating_button'));
+      if (localStorage.getItem(this.storageKeys.feedbackSubmitted) === 'true') {
+        feedbackFab.classList.add('feedback-fab-muted');
+      }
+      document.body.appendChild(feedbackFab);
     }
     if (!utilityTray.querySelector('.analytics-consent-btn')) {
       const consentButton = document.createElement('button');
@@ -409,6 +425,213 @@ class AnalyticsSystem {
       });
       utilityTray.appendChild(consentButton);
     }
+  }
+
+  injectFeedbackStyles() {
+    if (document.getElementById('analytics-feedback-style')) return;
+    const style = document.createElement('style');
+    style.id = 'analytics-feedback-style';
+    style.textContent = `
+      .feedback-fab {
+        position: fixed;
+        right: calc(14px + env(safe-area-inset-right));
+        bottom: calc(84px + env(safe-area-inset-bottom));
+        z-index: 26;
+        border: 0;
+        border-radius: 999px;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 14px;
+        font-weight: 700;
+        font-size: 14px;
+        color: #fff;
+        background: linear-gradient(135deg, #3a7afe, #58b2ff);
+        box-shadow: 0 8px 22px rgba(28, 120, 255, 0.35);
+        cursor: pointer;
+        opacity: 0.94;
+        transition: transform .16s ease, opacity .16s ease;
+        animation: feedbackFabPulse 2.2s ease-in-out infinite;
+      }
+      .feedback-fab:hover { transform: translateY(-1px) scale(1.01); opacity: 1; }
+      .feedback-fab.feedback-fab-muted {
+        opacity: 0.72;
+        animation: none;
+      }
+      @keyframes feedbackFabPulse {
+        0%, 100% { box-shadow: 0 8px 22px rgba(28, 120, 255, 0.35); }
+        50% { box-shadow: 0 10px 28px rgba(28, 120, 255, 0.52); }
+      }
+      #feedback-modal {
+        position: fixed;
+        inset: 0;
+        z-index: 90;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        background: rgba(2, 9, 24, 0.74);
+        padding: 16px;
+      }
+      #feedback-modal.open { display: flex; }
+      #feedback-modal .feedback-modal-card {
+        width: min(480px, calc(100vw - 24px));
+        border-radius: 18px;
+        background: #0a1e47;
+        border: 1px solid rgba(255,255,255,0.18);
+        color: #f6fbff;
+        box-shadow: 0 18px 46px rgba(0,0,0,0.45);
+        padding: 18px;
+      }
+      #feedback-modal .feedback-modal-title {
+        margin: 0 0 8px;
+        font-size: 22px;
+        font-weight: 800;
+      }
+      #feedback-modal .feedback-modal-copy {
+        margin: 0 0 14px;
+        opacity: 0.92;
+        font-size: 14px;
+      }
+      #feedback-modal .feedback-stars {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 14px;
+      }
+      #feedback-modal .feedback-star-btn {
+        flex: 1;
+        border: 1px solid rgba(255,255,255,0.22);
+        border-radius: 10px;
+        height: 40px;
+        font-size: 20px;
+        background: rgba(255,255,255,0.06);
+        color: #ffe083;
+        cursor: pointer;
+      }
+      #feedback-modal .feedback-star-btn.active {
+        background: rgba(255, 224, 131, 0.16);
+        border-color: rgba(255, 224, 131, 0.6);
+      }
+      #feedback-modal .feedback-tags {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+        margin-bottom: 12px;
+        font-size: 13px;
+      }
+      #feedback-modal .feedback-tags label {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      #feedback-modal textarea {
+        width: 100%;
+        resize: vertical;
+        min-height: 78px;
+        border-radius: 10px;
+        border: 1px solid rgba(255,255,255,0.2);
+        background: rgba(255,255,255,0.05);
+        color: #fff;
+        padding: 10px;
+        font: inherit;
+        margin-bottom: 14px;
+      }
+      #feedback-modal .feedback-modal-actions {
+        display: flex;
+        gap: 10px;
+      }
+      #feedback-modal .feedback-modal-actions button {
+        flex: 1;
+        height: 42px;
+        border: 0;
+        border-radius: 10px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+      #feedback-modal .feedback-modal-cancel {
+        background: rgba(255,255,255,0.12);
+        color: #fff;
+      }
+      #feedback-modal .feedback-modal-submit {
+        background: linear-gradient(135deg, #32b8ff, #297dff);
+        color: #fff;
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  ensureFeedbackModal() {
+    if (document.getElementById('feedback-modal')) return;
+    const modal = document.createElement('div');
+    modal.id = 'feedback-modal';
+    modal.setAttribute('aria-hidden', 'true');
+    modal.innerHTML = `
+      <div class="feedback-modal-card" role="dialog" aria-modal="true" aria-label="Feedback">
+        <h3 class="feedback-modal-title">How is your experience?</h3>
+        <p class="feedback-modal-copy">Quick feedback helps us improve levels and pacing.</p>
+        <div class="feedback-stars" id="feedback-stars">
+          <button type="button" class="feedback-star-btn" data-value="1">★</button>
+          <button type="button" class="feedback-star-btn" data-value="2">★</button>
+          <button type="button" class="feedback-star-btn" data-value="3">★</button>
+          <button type="button" class="feedback-star-btn" data-value="4">★</button>
+          <button type="button" class="feedback-star-btn" data-value="5">★</button>
+        </div>
+        <div class="feedback-tags">
+          <label><input type="checkbox" value="difficulty"> Difficulty</label>
+          <label><input type="checkbox" value="levels"> Levels</label>
+          <label><input type="checkbox" value="ui"> UI</label>
+          <label><input type="checkbox" value="performance"> Performance</label>
+          <label><input type="checkbox" value="ads"> Ads</label>
+          <label><input type="checkbox" value="bugs"> Bugs</label>
+        </div>
+        <textarea id="feedback-message" maxlength="500" placeholder="Optional note (what felt good or frustrating?)"></textarea>
+        <div class="feedback-modal-actions">
+          <button type="button" class="feedback-modal-cancel" id="feedback-cancel">Not now</button>
+          <button type="button" class="feedback-modal-submit" id="feedback-submit">Send</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+    this.feedbackDraft = { source: 'manual', rating: 0 };
+    modal.addEventListener('click', (event) => {
+      if (event.target === modal) this.closeFeedbackModal();
+    });
+    modal.querySelectorAll('.feedback-star-btn').forEach((button) => {
+      button.addEventListener('click', () => {
+        const value = Number(button.dataset.value || 0);
+        this.feedbackDraft.rating = value;
+        modal.querySelectorAll('.feedback-star-btn').forEach((candidate) => {
+          candidate.classList.toggle('active', Number(candidate.dataset.value || 0) <= value);
+        });
+      });
+    });
+    modal.querySelector('#feedback-cancel').addEventListener('click', () => this.closeFeedbackModal());
+    modal.querySelector('#feedback-submit').addEventListener('click', () => this.submitFeedbackModal());
+  }
+
+  closeFeedbackModal() {
+    const modal = document.getElementById('feedback-modal');
+    if (!modal) return;
+    modal.classList.remove('open');
+    modal.setAttribute('aria-hidden', 'true');
+  }
+
+  submitFeedbackModal() {
+    const modal = document.getElementById('feedback-modal');
+    if (!modal) return;
+    const rating = Number(this.feedbackDraft?.rating || 0);
+    if (!rating) {
+      if (window.FeedbackSystem && typeof window.FeedbackSystem.warning === 'function') {
+        window.FeedbackSystem.warning('Choose a star rating first');
+      }
+      return;
+    }
+    const selectedTags = Array.from(modal.querySelectorAll('.feedback-tags input:checked')).map((node) => node.value);
+    const messageRaw = modal.querySelector('#feedback-message')?.value || '';
+    this.submitFeedback(this.feedbackDraft?.source || 'manual', rating, selectedTags.join(','), messageRaw);
+    localStorage.setItem(this.storageKeys.feedbackSubmitted, 'true');
+    const feedbackFab = document.getElementById('feedback-fab');
+    if (feedbackFab) feedbackFab.classList.add('feedback-fab-muted');
+    this.closeFeedbackModal();
   }
 
   setAnalyticsConsent(enabled) {
@@ -440,11 +663,6 @@ class AnalyticsSystem {
     state.shownCount += 1;
     state.lastPromptAt = now;
     localStorage.setItem(this.storageKeys.feedbackPromptState, JSON.stringify(state));
-    this.track('rating_prompt_shown', {
-      source: source || 'auto_prompt',
-      levelIndex: level,
-      sessionIndex: this.sessionIndex
-    });
     this.openFeedbackFlow(source || 'auto_prompt');
   }
 
@@ -460,20 +678,43 @@ class AnalyticsSystem {
   }
 
   async openFeedbackFlow(source = 'manual') {
+    try {
+      this.ensureFeedbackModal();
+      this.feedbackDraft = { source, rating: 0 };
+      const modal = document.getElementById('feedback-modal');
+      if (!modal) return;
+      modal.querySelectorAll('.feedback-star-btn').forEach((candidate) => candidate.classList.remove('active'));
+      modal.querySelectorAll('.feedback-tags input').forEach((node) => {
+        node.checked = false;
+      });
+      const message = modal.querySelector('#feedback-message');
+      if (message) message.value = '';
+      modal.classList.add('open');
+      modal.setAttribute('aria-hidden', 'false');
+      this.track('rating_prompt_shown', {
+        source: source || 'manual',
+        levelIndex: Number(localStorage.getItem('water_puzzle_lvl') || 0),
+        sessionIndex: this.sessionIndex
+      });
+    } catch (error) {
+      if (window.DiagnosticsSystem && typeof window.DiagnosticsSystem.record === 'function') {
+        window.DiagnosticsSystem.record('feedback_flow_open_failed', {
+          message: String(error && error.message ? error.message : error)
+        }, 'warning');
+      }
+      if (window.DialogSystem && typeof window.DialogSystem.alert === 'function') {
+        window.DialogSystem.alert({
+          title: 'Feedback unavailable',
+          message: 'Could not open feedback right now. Please try again.',
+          icon: '⚠️'
+        });
+      }
+    }
+  }
+
+  submitFeedback(source, rating, tagRaw, feedbackRaw) {
     const levelIndex = Number(localStorage.getItem('water_puzzle_lvl') || 0);
     const adMode = window.MonetizationSystem?.adModeResolution?.mode || 'unknown';
-    const ratingRaw = window.prompt('Rate your experience from 1 to 5');
-    if (ratingRaw === null) return;
-    const parsedRating = Math.floor(Number(ratingRaw));
-    const rating = Math.min(5, Math.max(1, Number.isFinite(parsedRating) ? parsedRating : 0));
-    if (!rating) {
-      if (window.FeedbackSystem && typeof window.FeedbackSystem.warning === 'function') {
-        window.FeedbackSystem.warning('Please provide a rating from 1 to 5');
-      }
-      return;
-    }
-    const tagRaw = window.prompt('Optional tags (comma-separated): difficulty,ads,ui,bugs,levels,performance') || '';
-    const feedbackRaw = window.prompt('Optional written feedback (max 500 chars)') || '';
     const feedbackText = this.sanitizeFeedbackText(feedbackRaw);
     const tags = this.normalizeTags(tagRaw);
     this.track('rating_submitted', {
