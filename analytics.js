@@ -55,8 +55,7 @@ class AnalyticsSystem {
       queue: 'water_puzzle_analytics_queue_v1',
       consent: 'water_puzzle_analytics_consent_v1',
       attribution: 'water_puzzle_attribution_v1',
-      feedbackPromptState: 'water_puzzle_feedback_prompt_v1',
-      feedbackSubmitted: 'water_puzzle_feedback_submitted_v1'
+      feedbackPromptState: 'water_puzzle_feedback_prompt_v1'
     };
     this.playerId = this.ensurePlayerId();
     this.sessionId = `analytics_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
@@ -373,31 +372,20 @@ class AnalyticsSystem {
 
   setupFeedbackEntry() {
     const utilityTray = document.getElementById('top-utilities-tray');
-    if (!utilityTray) return;
     this.injectFeedbackStyles();
     this.ensureFeedbackModal();
-    if (!utilityTray.querySelector('.feedback-entry-btn')) {
-      const feedbackButton = document.createElement('button');
-      feedbackButton.type = 'button';
-      feedbackButton.className = 'hud-pill feedback-entry-btn';
-      feedbackButton.setAttribute('aria-label', 'Open rating and feedback');
-      feedbackButton.innerHTML = '<span class="hud-label">Feedback</span><span class="hud-value">★</span>';
-      feedbackButton.addEventListener('click', () => this.openFeedbackFlow('manual_button'));
-      utilityTray.appendChild(feedbackButton);
+    const mainFeedbackButton = document.getElementById('feedback-btn');
+    if (mainFeedbackButton && !mainFeedbackButton.dataset.feedbackBound) {
+      mainFeedbackButton.dataset.feedbackBound = '1';
+      mainFeedbackButton.addEventListener('click', () => this.openFeedbackFlow('main_menu_button'));
     }
-    if (!document.getElementById('feedback-fab')) {
-      const feedbackFab = document.createElement('button');
-      feedbackFab.type = 'button';
-      feedbackFab.id = 'feedback-fab';
-      feedbackFab.className = 'feedback-fab';
-      feedbackFab.setAttribute('aria-label', 'Share quick feedback');
-      feedbackFab.innerHTML = '<span class="feedback-fab-icon">💬</span><span class="feedback-fab-text">Feedback</span>';
-      feedbackFab.addEventListener('click', () => this.openFeedbackFlow('floating_button'));
-      if (localStorage.getItem(this.storageKeys.feedbackSubmitted) === 'true') {
-        feedbackFab.classList.add('feedback-fab-muted');
-      }
-      document.body.appendChild(feedbackFab);
+    const oldFab = document.getElementById('feedback-fab');
+    if (oldFab) oldFab.remove();
+    if (utilityTray) {
+      const legacyFeedbackButton = utilityTray.querySelector('.feedback-entry-btn');
+      if (legacyFeedbackButton) legacyFeedbackButton.remove();
     }
+    if (!utilityTray) return;
     if (!utilityTray.querySelector('.analytics-consent-btn')) {
       const consentButton = document.createElement('button');
       consentButton.type = 'button';
@@ -432,59 +420,46 @@ class AnalyticsSystem {
     const style = document.createElement('style');
     style.id = 'analytics-feedback-style';
     style.textContent = `
-      .feedback-fab {
-        position: fixed;
-        right: calc(14px + env(safe-area-inset-right));
-        bottom: calc(84px + env(safe-area-inset-bottom));
-        z-index: 26;
-        border: 0;
-        border-radius: 999px;
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        padding: 10px 14px;
-        font-weight: 700;
-        font-size: 14px;
-        color: #fff;
-        background: linear-gradient(135deg, #3a7afe, #58b2ff);
-        box-shadow: 0 8px 22px rgba(28, 120, 255, 0.35);
-        cursor: pointer;
-        opacity: 0.94;
-        transition: transform .16s ease, opacity .16s ease;
-        animation: feedbackFabPulse 2.2s ease-in-out infinite;
-      }
-      .feedback-fab:hover { transform: translateY(-1px) scale(1.01); opacity: 1; }
-      .feedback-fab.feedback-fab-muted {
-        opacity: 0.72;
-        animation: none;
-      }
-      @keyframes feedbackFabPulse {
-        0%, 100% { box-shadow: 0 8px 22px rgba(28, 120, 255, 0.35); }
-        50% { box-shadow: 0 10px 28px rgba(28, 120, 255, 0.52); }
-      }
       #feedback-modal {
         position: fixed;
         inset: 0;
-        z-index: 90;
+        z-index: 190;
         display: none;
         align-items: center;
         justify-content: center;
-        background: rgba(2, 9, 24, 0.74);
+        background: rgba(2, 9, 24, 0.8);
         padding: 16px;
       }
       #feedback-modal.open { display: flex; }
       #feedback-modal .feedback-modal-card {
-        width: min(480px, calc(100vw - 24px));
-        border-radius: 18px;
-        background: #0a1e47;
-        border: 1px solid rgba(255,255,255,0.18);
+        width: min(520px, calc(100vw - 24px));
+        border-radius: 20px;
+        background: linear-gradient(170deg, #0c1f4d, #081733);
+        border: 1px solid rgba(255,255,255,0.2);
         color: #f6fbff;
-        box-shadow: 0 18px 46px rgba(0,0,0,0.45);
-        padding: 18px;
+        box-shadow: 0 24px 54px rgba(0,0,0,0.48);
+        padding: 20px;
+      }
+      #feedback-modal .feedback-modal-head {
+        display: flex;
+        align-items: start;
+        justify-content: space-between;
+        gap: 12px;
+      }
+      #feedback-modal .feedback-close {
+        border: 0;
+        width: 34px;
+        height: 34px;
+        border-radius: 10px;
+        font-size: 22px;
+        line-height: 1;
+        color: #e8f0ff;
+        background: rgba(255,255,255,0.08);
+        cursor: pointer;
       }
       #feedback-modal .feedback-modal-title {
         margin: 0 0 8px;
-        font-size: 22px;
+        font-size: 23px;
         font-weight: 800;
       }
       #feedback-modal .feedback-modal-copy {
@@ -495,25 +470,31 @@ class AnalyticsSystem {
       #feedback-modal .feedback-stars {
         display: flex;
         gap: 8px;
-        margin-bottom: 14px;
+        margin-bottom: 8px;
       }
       #feedback-modal .feedback-star-btn {
         flex: 1;
-        border: 1px solid rgba(255,255,255,0.22);
-        border-radius: 10px;
-        height: 40px;
-        font-size: 20px;
+        border: 1px solid rgba(255,255,255,0.24);
+        border-radius: 11px;
+        height: 42px;
+        font-size: 21px;
         background: rgba(255,255,255,0.06);
         color: #ffe083;
         cursor: pointer;
       }
       #feedback-modal .feedback-star-btn.active {
-        background: rgba(255, 224, 131, 0.16);
+        background: rgba(255, 224, 131, 0.24);
         border-color: rgba(255, 224, 131, 0.6);
+      }
+      #feedback-modal .feedback-rating-caption {
+        margin: 0 0 12px;
+        min-height: 20px;
+        color: #cde5ff;
+        font-size: 13px;
       }
       #feedback-modal .feedback-tags {
         display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-columns: repeat(3, minmax(0, 1fr));
         gap: 8px;
         margin-bottom: 12px;
         font-size: 13px;
@@ -522,18 +503,27 @@ class AnalyticsSystem {
         display: flex;
         align-items: center;
         gap: 6px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
       }
       #feedback-modal textarea {
         width: 100%;
         resize: vertical;
-        min-height: 78px;
+        min-height: 84px;
         border-radius: 10px;
         border: 1px solid rgba(255,255,255,0.2);
         background: rgba(255,255,255,0.05);
         color: #fff;
         padding: 10px;
         font: inherit;
-        margin-bottom: 14px;
+        margin-bottom: 6px;
+      }
+      #feedback-modal .feedback-char-count {
+        text-align: right;
+        margin: 0 0 14px;
+        color: rgba(206, 223, 255, 0.86);
+        font-size: 12px;
       }
       #feedback-modal .feedback-modal-actions {
         display: flex;
@@ -555,6 +545,15 @@ class AnalyticsSystem {
         background: linear-gradient(135deg, #32b8ff, #297dff);
         color: #fff;
       }
+      #feedback-modal .feedback-modal-submit:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+      }
+      @media (max-width: 720px) {
+        #feedback-modal .feedback-tags {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
     `;
     document.head.appendChild(style);
   }
@@ -566,8 +565,13 @@ class AnalyticsSystem {
     modal.setAttribute('aria-hidden', 'true');
     modal.innerHTML = `
       <div class="feedback-modal-card" role="dialog" aria-modal="true" aria-label="Feedback">
-        <h3 class="feedback-modal-title">How is your experience?</h3>
-        <p class="feedback-modal-copy">Quick feedback helps us improve levels and pacing.</p>
+        <div class="feedback-modal-head">
+          <div>
+            <h3 class="feedback-modal-title">Share feedback</h3>
+            <p class="feedback-modal-copy">Tell us what feels great and what needs improving.</p>
+          </div>
+          <button type="button" class="feedback-close" id="feedback-close" aria-label="Close feedback">&times;</button>
+        </div>
         <div class="feedback-stars" id="feedback-stars">
           <button type="button" class="feedback-star-btn" data-value="1">★</button>
           <button type="button" class="feedback-star-btn" data-value="2">★</button>
@@ -575,6 +579,7 @@ class AnalyticsSystem {
           <button type="button" class="feedback-star-btn" data-value="4">★</button>
           <button type="button" class="feedback-star-btn" data-value="5">★</button>
         </div>
+        <p class="feedback-rating-caption" id="feedback-rating-caption">Choose a rating</p>
         <div class="feedback-tags">
           <label><input type="checkbox" value="difficulty"> Difficulty</label>
           <label><input type="checkbox" value="levels"> Levels</label>
@@ -584,9 +589,10 @@ class AnalyticsSystem {
           <label><input type="checkbox" value="bugs"> Bugs</label>
         </div>
         <textarea id="feedback-message" maxlength="500" placeholder="Optional note (what felt good or frustrating?)"></textarea>
+        <p class="feedback-char-count"><span id="feedback-char-count">0</span>/500</p>
         <div class="feedback-modal-actions">
           <button type="button" class="feedback-modal-cancel" id="feedback-cancel">Not now</button>
-          <button type="button" class="feedback-modal-submit" id="feedback-submit">Send</button>
+          <button type="button" class="feedback-modal-submit" id="feedback-submit" disabled>Send</button>
         </div>
       </div>
     `;
@@ -602,10 +608,25 @@ class AnalyticsSystem {
         modal.querySelectorAll('.feedback-star-btn').forEach((candidate) => {
           candidate.classList.toggle('active', Number(candidate.dataset.value || 0) <= value);
         });
+        const caption = modal.querySelector('#feedback-rating-caption');
+        if (caption) {
+          const labels = ['', 'Needs work', 'Okay', 'Good', 'Great', 'Excellent'];
+          caption.textContent = `${value}/5 • ${labels[value]}`;
+        }
+        const submitButton = modal.querySelector('#feedback-submit');
+        if (submitButton) submitButton.disabled = value < 1;
       });
     });
+    modal.querySelector('#feedback-close').addEventListener('click', () => this.closeFeedbackModal());
     modal.querySelector('#feedback-cancel').addEventListener('click', () => this.closeFeedbackModal());
     modal.querySelector('#feedback-submit').addEventListener('click', () => this.submitFeedbackModal());
+    const messageInput = modal.querySelector('#feedback-message');
+    if (messageInput) {
+      messageInput.addEventListener('input', () => {
+        const counter = modal.querySelector('#feedback-char-count');
+        if (counter) counter.textContent = String(messageInput.value.length);
+      });
+    }
   }
 
   closeFeedbackModal() {
@@ -628,9 +649,6 @@ class AnalyticsSystem {
     const selectedTags = Array.from(modal.querySelectorAll('.feedback-tags input:checked')).map((node) => node.value);
     const messageRaw = modal.querySelector('#feedback-message')?.value || '';
     this.submitFeedback(this.feedbackDraft?.source || 'manual', rating, selectedTags.join(','), messageRaw);
-    localStorage.setItem(this.storageKeys.feedbackSubmitted, 'true');
-    const feedbackFab = document.getElementById('feedback-fab');
-    if (feedbackFab) feedbackFab.classList.add('feedback-fab-muted');
     this.closeFeedbackModal();
   }
 
@@ -689,6 +707,12 @@ class AnalyticsSystem {
       });
       const message = modal.querySelector('#feedback-message');
       if (message) message.value = '';
+      const counter = modal.querySelector('#feedback-char-count');
+      if (counter) counter.textContent = '0';
+      const caption = modal.querySelector('#feedback-rating-caption');
+      if (caption) caption.textContent = 'Choose a rating';
+      const submit = modal.querySelector('#feedback-submit');
+      if (submit) submit.disabled = true;
       modal.classList.add('open');
       modal.setAttribute('aria-hidden', 'false');
       this.track('rating_prompt_shown', {

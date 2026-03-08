@@ -14,15 +14,15 @@ const { chromium } = require('playwright');
 
   const base = await page.evaluate(() => {
     const analytics = window.AnalyticsSystem;
+    const mainBtn = Boolean(document.getElementById('feedback-btn'));
     const trayBtn = Boolean(document.querySelector('#top-utilities-tray .feedback-entry-btn'));
-    const fabBtn = Boolean(document.getElementById('feedback-fab'));
     const consentBtn = Boolean(document.querySelector('#top-utilities-tray .analytics-consent-btn'));
     const events = analytics.getEvents();
     const hasAcq = events.some((e) => e.eventType === 'acquisition_attributed');
     const hasPlayerId = typeof analytics.playerId === 'string' && analytics.playerId.length > 8;
     return {
+      mainBtn,
       trayBtn,
-      fabBtn,
       consentBtn,
       hasAcq,
       hasPlayerId,
@@ -30,13 +30,13 @@ const { chromium } = require('playwright');
     };
   });
 
-  push('Feedback button exists in utility tray', base.trayBtn, JSON.stringify(base));
-  push('Feedback floating button exists', base.fabBtn, JSON.stringify(base));
+  push('Feedback button exists in main controls', base.mainBtn, JSON.stringify(base));
+  push('Legacy submenu feedback button removed', !base.trayBtn, JSON.stringify(base));
   push('Consent toggle exists in utility tray', base.consentBtn, JSON.stringify(base));
   push('Acquisition event emitted', base.hasAcq, JSON.stringify(base));
   push('Player ID generated', base.hasPlayerId, JSON.stringify(base));
 
-  await page.click('#feedback-fab');
+  await page.click('#feedback-btn');
   await page.waitForTimeout(250);
   await page.click('#feedback-stars .feedback-star-btn[data-value="5"]');
   await page.check('#feedback-modal .feedback-tags input[value="difficulty"]');
