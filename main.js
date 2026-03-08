@@ -213,6 +213,9 @@ function refreshEconomyFromStorage() {
 }
 
 function consumeHintForHintAction() {
+  if (window.MonetizationSystem && typeof window.MonetizationSystem.isAdFreeEntitled === 'function' && window.MonetizationSystem.isAdFreeEntitled()) {
+    return 0;
+  }
   if (hintCount <= 0) return 0;
   if (window.MonetizationSystem && typeof window.MonetizationSystem.consumeHint === 'function') {
     window.MonetizationSystem.consumeHint(1, { source: 'hint_button', levelIndex: lvlIdx });
@@ -974,6 +977,7 @@ function updateHUD() {
   const par = getCurrentPar(basePar);
   const target = level?.target ?? targetAmt;
   const difficultySettings = getDifficultySettings();
+  const isAdFreeEntitled = Boolean(window.MonetizationSystem && typeof window.MonetizationSystem.isAdFreeEntitled === 'function' && window.MonetizationSystem.isAdFreeEntitled());
   const canUseHint = difficultySettings && typeof window.DifficultySystem?.canUseHint === 'function'
     ? window.DifficultySystem.canUseHint()
     : true;
@@ -981,14 +985,14 @@ function updateHUD() {
   hudWorldLevel.textContent = `W${worldNum} • L${lvlIdx + 1}`;
   hudMovesPar.textContent = `${moves} / PAR ${par}`;
   hudTarget.textContent = `${target}L`;
-  hudHints.textContent = hintCount > 0 ? String(hintCount) : 'FREE';
+  hudHints.textContent = isAdFreeEntitled ? 'FREE' : String(Math.max(0, hintCount));
   hudStars.textContent = `${totalStars} ⭐`;
 
-  document.getElementById('hint-count').textContent = hintCount > 0 ? hintCount : 'FREE';
+  document.getElementById('hint-count').textContent = isAdFreeEntitled ? 'FREE' : String(Math.max(0, hintCount));
   soundBtn.classList.toggle('muted', !Audio.enabled);
   soundBtn.setAttribute('aria-pressed', String(Audio.enabled));
   soundBtn.setAttribute('aria-label', Audio.enabled ? 'Mute sound' : 'Unmute sound');
-  hintBtn.setAttribute('aria-label', canUseHint ? (hintCount > 0 ? `Use hint (${hintCount} remaining)` : 'Use free hint') : 'Hints unavailable in this mode');
+  hintBtn.setAttribute('aria-label', canUseHint ? (isAdFreeEntitled ? 'Use free hint' : `Use hint (${Math.max(0, hintCount)} remaining)`) : 'Hints unavailable in this mode');
 
   const actionsBlocked = isAnimating || won;
   setButtonDisabled(menuBtn, isAnimating);

@@ -10,9 +10,9 @@ class DifficultySystem {
     this.modes = {
       casual: {
         name: 'Casual',
-        description: 'Relaxed gameplay with unlimited hints',
+        description: 'Relaxed gameplay with optional assistance',
         icon: '🌱',
-        hints: 'unlimited',
+        hints: 5,
         parMultiplier: 1.5, // More lenient par
         starThresholds: {
           3: 2.0, // 2x par for 3 stars
@@ -245,8 +245,10 @@ class DifficultySystem {
   }
 
   canUseHint() {
+    if (window.MonetizationSystem && typeof window.MonetizationSystem.isAdFreeEntitled === 'function' && window.MonetizationSystem.isAdFreeEntitled()) {
+      return true;
+    }
     const mode = this.modes[this.currentMode];
-    if (mode.hints === 'unlimited') return true;
     if (mode.hints === 0) return false;
     
     // Check current hint count
