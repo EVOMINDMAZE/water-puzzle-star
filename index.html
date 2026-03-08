@@ -316,9 +316,10 @@
 
     .feedback-main-btn {
       position: relative;
-      width: 118px;
+      width: 104px;
       gap: 7px;
-      padding: 0 10px;
+      padding: 0 8px;
+      justify-content: center;
       color: #b7e3ff;
       border-color: rgba(85, 182, 255, 0.5);
       background: linear-gradient(160deg, rgba(31, 124, 255, 0.34), rgba(25, 91, 207, 0.24));
@@ -339,7 +340,7 @@
     }
 
     .feedback-main-btn .feedback-btn-label {
-      font-size: 11px;
+      font-size: 10px;
       font-weight: 800;
       letter-spacing: 0.02em;
       text-transform: uppercase;
@@ -923,6 +924,16 @@
     #bottom-banner.compact .icon-btn {
       width: 42px;
       height: 42px;
+    }
+
+    #bottom-banner.compact .feedback-main-btn {
+      width: 56px;
+      padding: 0;
+      animation: none;
+    }
+
+    #bottom-banner.compact .feedback-main-btn .feedback-btn-label {
+      display: none;
     }
 
     @keyframes bounce {
