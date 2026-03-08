@@ -387,7 +387,7 @@
       }
 
       .feedback-main-btn .feedback-btn-label {
-        display: none;
+        font-size: 8px;
       }
     }
 
@@ -934,19 +934,26 @@
 
     #bottom-banner.compact .feedback-main-btn {
       width: 56px;
-      padding: 0;
+      padding: 1px 0 0;
+      gap: 1px;
+      flex-direction: column;
       animation: feedback-main-pulse 2.2s ease-in-out infinite;
       border-color: rgba(120, 203, 255, 0.9);
       box-shadow: inset 0 0 0 1px rgba(255,255,255,0.12), 0 0 0 2px rgba(73, 175, 255, 0.22);
     }
 
     #bottom-banner.compact .feedback-main-btn .feedback-btn-label {
-      display: none;
+      display: block;
+      font-size: 7px;
+      line-height: 1;
+      letter-spacing: 0.01em;
+      text-transform: lowercase;
+      opacity: 0.95;
     }
 
     #bottom-banner.compact .feedback-main-btn svg {
-      width: 23px;
-      height: 23px;
+      width: 18px;
+      height: 18px;
     }
 
     #bottom-banner.compact .feedback-main-btn .feedback-badge {
