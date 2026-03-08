@@ -196,9 +196,14 @@ class TutorialSystem {
   positionTooltip(step) {
     const tooltip = this.overlay.querySelector('.tutorial-tooltip');
     tooltip.className = 'tutorial-tooltip';
+    tooltip.style.top = '';
+    tooltip.style.left = '';
+    const viewportPadding = window.innerWidth <= 480 ? 10 : 20;
     
     if (step.position === 'center') {
       tooltip.classList.add('position-center');
+      tooltip.style.top = '50%';
+      tooltip.style.left = '50%';
       return;
     }
     
@@ -228,13 +233,20 @@ class TutorialSystem {
         }
         
         // Keep within viewport
-        top = Math.max(20, Math.min(window.innerHeight - tooltipRect.height - 20, top));
-        left = Math.max(20, Math.min(window.innerWidth - tooltipRect.width - 20, left));
+        const maxTop = Math.max(viewportPadding, window.innerHeight - tooltipRect.height - viewportPadding);
+        const maxLeft = Math.max(viewportPadding, window.innerWidth - tooltipRect.width - viewportPadding);
+        top = Math.max(viewportPadding, Math.min(maxTop, top));
+        left = Math.max(viewportPadding, Math.min(maxLeft, left));
         
         tooltip.style.top = `${top}px`;
         tooltip.style.left = `${left}px`;
+        return;
       }
     }
+
+    tooltip.classList.add('position-center');
+    tooltip.style.top = '50%';
+    tooltip.style.left = '50%';
   }
 
   highlightTarget(selector) {
