@@ -64,3 +64,19 @@ For a deeper dive into the system design, see [docs/ARCHITECTURE.md](docs/ARCHIT
 - Deployment workflow is included at `.github/workflows/cloudflare-pages.yml`.
 - Cloudflare headers are configured in `_headers` for safer cache behavior during testing.
 - Setup guide: [docs/CLOUDFLARE_PAGES.md](docs/CLOUDFLARE_PAGES.md)
+
+## Ads and Ad-Free Sharing
+
+- Standard URL stays in ads mode by default.
+- Signed invite links can unlock ad-free mode with expiry support.
+- Invite verification API contract: [docs/AD_MODE_INVITE_CONTRACT.md](docs/AD_MODE_INVITE_CONTRACT.md)
+- Operational sharing guide: [docs/AD_MODE_SHARING.md](docs/AD_MODE_SHARING.md)
+
+## Growth Analytics and Feedback
+
+- Frontend analytics now capture acquisition, session engagement, progression, ratings, and feedback events.
+- Configure ingestion endpoint in page bootstrap:
+  - `window.ANALYTICS_INGEST_ENDPOINT = "https://<worker-domain>/ingest-analytics"`
+- KPI/event schema: [docs/ANALYTICS_KPI_SCHEMA.md](docs/ANALYTICS_KPI_SCHEMA.md)
+- Ingest API contract: [docs/ANALYTICS_INGEST_API.md](docs/ANALYTICS_INGEST_API.md)
+- Dashboard query examples: [docs/ANALYTICS_DASHBOARD_QUERIES.md](docs/ANALYTICS_DASHBOARD_QUERIES.md)

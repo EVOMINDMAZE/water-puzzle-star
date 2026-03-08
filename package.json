@@ -11,7 +11,8 @@
     "dev": "http-server . -a 127.0.0.1 -p 4174 -c-1",
     "start": "npm run dev",
     "test:ux": "node test-artifacts/ux-regression-test.js",
-    "test:task5": "node test-artifacts/task5-validation.js"
+    "test:task5": "node test-artifacts/task5-validation.js",
+    "test:analytics-feedback": "node test-artifacts/analytics-feedback-check.js"
   },
   "keywords": [],
   "author": "",

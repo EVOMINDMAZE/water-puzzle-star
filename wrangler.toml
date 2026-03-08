@@ -1,0 +1,13 @@
+name = "water-puzzle-analytics"
+main = "worker/analytics-ingest-worker.js"
+compatibility_date = "2026-03-08"
+workers_dev = true
+account_id = "cefe05d1f252dfb2a36c7f5ed7b6ebc7"
+
+[vars]
+ANALYTICS_ALLOWED_ORIGINS = "https://water-puzzle-star.pages.dev,https://e59ae86d.water-puzzle-star.pages.dev"
+
+[[d1_databases]]
+binding = "ANALYTICS_DB"
+database_name = "water-puzzle-analytics"
+database_id = "258d9463-666a-4715-940f-dd06b1be1c97"
