@@ -15,6 +15,8 @@ const { chromium } = require('playwright');
   const base = await page.evaluate(() => {
     const analytics = window.AnalyticsSystem;
     const mainBtn = Boolean(document.getElementById('feedback-btn'));
+    const labelText = document.querySelector('#feedback-btn .feedback-btn-label')?.textContent?.trim() || '';
+    const badgeVisible = Boolean(document.querySelector('#feedback-btn .feedback-badge'));
     const trayBtn = Boolean(document.querySelector('#top-utilities-tray .feedback-entry-btn'));
     const consentBtn = Boolean(document.querySelector('#top-utilities-tray .analytics-consent-btn'));
     const events = analytics.getEvents();
@@ -22,6 +24,8 @@ const { chromium } = require('playwright');
     const hasPlayerId = typeof analytics.playerId === 'string' && analytics.playerId.length > 8;
     return {
       mainBtn,
+      labelText,
+      badgeVisible,
       trayBtn,
       consentBtn,
       hasAcq,
@@ -31,6 +35,8 @@ const { chromium } = require('playwright');
   });
 
   push('Feedback button exists in main controls', base.mainBtn, JSON.stringify(base));
+  push('Feedback label is visible on main button', base.labelText === 'Feedback', JSON.stringify(base));
+  push('Feedback badge is visible before first submit', base.badgeVisible, JSON.stringify(base));
   push('Legacy submenu feedback button removed', !base.trayBtn, JSON.stringify(base));
   push('Consent toggle exists in utility tray', base.consentBtn, JSON.stringify(base));
   push('Acquisition event emitted', base.hasAcq, JSON.stringify(base));
@@ -53,6 +59,7 @@ const { chromium } = require('playwright');
     return {
       hasRating: Boolean(rating),
       hasFeedback: Boolean(feedback),
+      buttonMarkedComplete: document.getElementById('feedback-btn')?.classList.contains('feedback-complete') || false,
       ratingPayload: rating ? rating.payload : null,
       feedbackPayload: feedback ? feedback.payload : null
     };
@@ -60,6 +67,7 @@ const { chromium } = require('playwright');
 
   push('Rating submission event emitted', feedbackFlow.hasRating, JSON.stringify(feedbackFlow));
   push('Feedback submission event emitted', feedbackFlow.hasFeedback, JSON.stringify(feedbackFlow));
+  push('Feedback badge hides after submit', feedbackFlow.buttonMarkedComplete, JSON.stringify(feedbackFlow));
   push('Rating payload captures 1-5 score', Number(feedbackFlow.ratingPayload?.rating) === 5, JSON.stringify(feedbackFlow.ratingPayload));
   push('Feedback payload captures tags', typeof feedbackFlow.feedbackPayload?.tags === 'string' && feedbackFlow.feedbackPayload.tags.includes('difficulty'), JSON.stringify(feedbackFlow.feedbackPayload));
 

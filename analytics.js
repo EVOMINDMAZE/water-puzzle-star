@@ -55,7 +55,8 @@ class AnalyticsSystem {
       queue: 'water_puzzle_analytics_queue_v1',
       consent: 'water_puzzle_analytics_consent_v1',
       attribution: 'water_puzzle_attribution_v1',
-      feedbackPromptState: 'water_puzzle_feedback_prompt_v1'
+      feedbackPromptState: 'water_puzzle_feedback_prompt_v1',
+      feedbackSubmitted: 'water_puzzle_feedback_submitted_v1'
     };
     this.playerId = this.ensurePlayerId();
     this.sessionId = `analytics_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
@@ -379,6 +380,7 @@ class AnalyticsSystem {
       mainFeedbackButton.dataset.feedbackBound = '1';
       mainFeedbackButton.addEventListener('click', () => this.openFeedbackFlow('main_menu_button'));
     }
+    this.updateFeedbackButtonState();
     const oldFab = document.getElementById('feedback-fab');
     if (oldFab) oldFab.remove();
     if (utilityTray) {
@@ -649,7 +651,16 @@ class AnalyticsSystem {
     const selectedTags = Array.from(modal.querySelectorAll('.feedback-tags input:checked')).map((node) => node.value);
     const messageRaw = modal.querySelector('#feedback-message')?.value || '';
     this.submitFeedback(this.feedbackDraft?.source || 'manual', rating, selectedTags.join(','), messageRaw);
+    localStorage.setItem(this.storageKeys.feedbackSubmitted, 'true');
+    this.updateFeedbackButtonState();
     this.closeFeedbackModal();
+  }
+
+  updateFeedbackButtonState() {
+    const button = document.getElementById('feedback-btn');
+    if (!button) return;
+    const submitted = localStorage.getItem(this.storageKeys.feedbackSubmitted) === 'true';
+    button.classList.toggle('feedback-complete', submitted);
   }
 
   setAnalyticsConsent(enabled) {
