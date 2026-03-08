@@ -1,0 +1,55 @@
+{
+  "product": {
+    "appName": "Water Puzzle Star",
+    "packageIdAndroid": "com.waterpuzzlestar.game",
+    "bundleIdIos": "com.waterpuzzlestar.game",
+    "versionName": "1.0.0",
+    "versionCode": 1
+  },
+  "storeMetadata": {
+    "shortDescription": "Sort water across bottles with strategic pours and optional helper rewards.",
+    "fullDescription": "Water Puzzle Star is a relaxing logic game where players solve bottle-sorting puzzles. Monetization stays optional with rewarded utility offers, ad-free entitlement, and consumable hint bundles.",
+    "keywords": [
+      "water sort",
+      "puzzle",
+      "logic",
+      "brain game",
+      "casual"
+    ],
+    "supportUrl": "https://example.com/support",
+    "privacyPolicyUrl": "https://example.com/privacy"
+  },
+  "privacyDisclosures": {
+    "collectsAnalytics": true,
+    "collectsCrashLogs": true,
+    "usesAdvertisingId": true,
+    "supportsDataDeletionRequest": true,
+    "thirdPartyServices": [
+      "Playwright QA automation (development only)",
+      "In-game analytics event stream"
+    ]
+  },
+  "contentRatings": {
+    "googlePlay": {
+      "violence": "none",
+      "gambling": "none",
+      "sexualContent": "none",
+      "userGeneratedContent": "none"
+    },
+    "appStore": {
+      "ageRating": "4+",
+      "inAppPurchases": true,
+      "unrestrictedWebAccess": false
+    }
+  },
+  "visualAssets": {
+    "icon": "/Users/riad/Downloads/water-puzzle-star/assets/bg.png",
+    "featureGraphic": "/Users/riad/Downloads/water-puzzle-star/assets/bg.png",
+    "phoneScreenshots": [
+      "/Users/riad/Downloads/water-puzzle-star/test-artifacts/task5-manual-2026-03-06T20-56-20-823Z/portrait.png"
+    ],
+    "tabletScreenshots": [
+      "/Users/riad/Downloads/water-puzzle-star/test-artifacts/task5-manual-2026-03-06T20-56-20-823Z/landscape.png"
+    ]
+  }
+}

@@ -1,0 +1,10 @@
+- [x] Rewarded ad offers exist for hints/retry/bonus and never block core completion.
+- [x] Ad-free entitlement disables forced/interstitial placements while keeping rewarded ads optional.
+- [x] Hint bundle purchase grants are idempotent and persist correctly after restart.
+- [x] Daily streak milestones and missed-day behavior follow configured rules.
+- [x] Limited-time events activate/deactivate correctly from configuration windows.
+- [x] Analytics events emit for onboarding, progression, ad funnel, and purchase funnel states.
+- [x] Invalid monetization/event configuration fails safely with non-fatal diagnostics.
+- [x] Release readiness checklist includes metadata, privacy disclosures, ratings, and visual assets.
+- [x] UX validation confirms clear value exchange messaging for ads and purchases.
+- [x] No forced-ad-only progression gates remain in gameplay flow.

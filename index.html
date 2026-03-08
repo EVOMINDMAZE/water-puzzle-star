@@ -1,0 +1,1041 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="description" content="Water Puzzle Star - A captivating water sorting puzzle game with 1000 levels">
+  <meta name="keywords" content="puzzle, water sort, brain teaser, logic game, casual game">
+  <meta name="author" content="Water Puzzle Star">
+  <meta name="theme-color" content="#00D2FF">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Water Puzzle">
+  
+  <!-- Open Graph -->
+  <meta property="og:title" content="Water Puzzle Star">
+  <meta property="og:description" content="Sort colored water in this addictive puzzle game!">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://waterpuzzlestar.com">
+  <meta property="og:image" content="/assets/og-image.png">
+  
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Water Puzzle Star">
+  <meta name="twitter:description" content="Sort colored water in this addictive puzzle game!">
+  <meta name="twitter:image" content="/assets/twitter-card.png">
+  
+  <title>Water Puzzle Star</title>
+  
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="manifest.json">
+  
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png">
+  
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="enhancements.css">
+  <link rel="stylesheet" href="achievements.css">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    :root {
+      --bg-start: #0f172a;
+      --bg-end: #1e1b4b;
+      --text: #ffffff;
+      --muted: rgba(255, 255, 255, 0.62);
+      --surface-1: rgba(8, 14, 24, 0.76);
+      --surface-2: rgba(12, 21, 36, 0.82);
+      --glass-bg: rgba(255, 255, 255, 0.05);
+      --glass-border: rgba(255, 255, 255, 0.1);
+      --hud-bg: var(--surface-1);
+      --hud-border: rgba(255, 255, 255, 0.16);
+      --primary: #00D2FF;
+      --secondary: #3A7BD5;
+      --accent: #FF512F;
+      --success: #10B981;
+      --radius-sm: 12px;
+      --radius-md: 16px;
+      --radius-lg: 24px;
+      --shadow-soft: 0 8px 24px rgba(2, 8, 20, 0.34);
+      --shadow-strong: 0 18px 44px rgba(2, 8, 20, 0.5);
+      --motion-fast: 180ms;
+      --motion-base: 260ms;
+      --motion-spring: cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+
+    body.theme-light {
+      --surface-1: rgba(255, 255, 255, 0.86);
+      --surface-2: rgba(247, 250, 255, 0.92);
+      --hud-bg: rgba(255, 255, 255, 0.94);
+      --hud-border: rgba(15, 23, 42, 0.2);
+      --glass-bg: rgba(255, 255, 255, 0.72);
+      --glass-border: rgba(15, 23, 42, 0.14);
+      --shadow-soft: 0 10px 24px rgba(15, 23, 42, 0.14);
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      background: #0B0B0E;
+      overflow: hidden;
+      font-family: 'Inter', Arial, sans-serif;
+      color: var(--text);
+    }
+
+    /* Animated background glow */
+    body::before {
+      content: '';
+      position: fixed;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle at center, rgba(58, 123, 213, 0.1) 0%, transparent 50%);
+      animation: drift 20s linear infinite;
+      z-index: -1;
+      pointer-events: none;
+    }
+
+    @keyframes drift {
+      from {
+        transform: rotate(0deg);
+      }
+
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    #game-root {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      height: 100%;
+      max-width: 480px;
+      margin: 0 auto;
+      background: linear-gradient(135deg, var(--bg-start) 0%, var(--bg-end) 100%);
+      position: relative;
+      overflow: hidden;
+      box-shadow: var(--shadow-strong);
+    }
+
+    #gameCanvas {
+      display: block;
+      flex: 1 1 0;
+      min-height: 0;
+      touch-action: none;
+      cursor: pointer;
+    }
+
+    /* ── TOP HUD (DOM Overlay) ───────────────────────────── */
+    #top-hud {
+      position: absolute;
+      top: calc(8px + env(safe-area-inset-top));
+      left: calc(12px + env(safe-area-inset-left));
+      right: calc(12px + env(safe-area-inset-right));
+      z-index: 110;
+      display: flex;
+      flex-wrap: wrap;
+      column-gap: 8px;
+      row-gap: 8px;
+      align-items: stretch;
+      justify-content: center;
+      pointer-events: none;
+    }
+
+    .hud-pill {
+      background: var(--hud-bg);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid var(--hud-border);
+      border-radius: 14px;
+      padding: 6px 10px;
+      min-height: 32px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex: 0 1 auto;
+      max-width: 100%;
+      box-shadow: var(--shadow-soft);
+      transition: transform var(--motion-base) var(--motion-spring), background-color var(--motion-base) ease, border-color var(--motion-base) ease;
+    }
+
+    .hud-label {
+      font-size: 10px;
+      font-weight: 800;
+      color: var(--muted);
+      letter-spacing: 0.6px;
+      text-transform: uppercase;
+    }
+
+    .hud-value {
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--text);
+      letter-spacing: 0.2px;
+      text-shadow: 0 1px 6px rgba(0, 0, 0, 0.35);
+    }
+
+    .theme-toggle,
+    .help-trigger {
+      pointer-events: auto;
+      cursor: pointer;
+      border-radius: var(--radius-md);
+    }
+
+    .hud-menu-toggle {
+      pointer-events: auto;
+      cursor: pointer;
+      border-radius: var(--radius-md);
+      margin-left: auto;
+    }
+
+    .theme-toggle:hover,
+    .help-trigger:hover,
+    .hud-menu-toggle:hover {
+      transform: translateY(-1px);
+      background: rgba(255, 255, 255, 0.12);
+      border-color: rgba(255, 255, 255, 0.24);
+    }
+
+    body.theme-light .theme-toggle:hover,
+    body.theme-light .help-trigger:hover,
+    body.theme-light .hud-menu-toggle:hover {
+      background: rgba(15, 23, 42, 0.06);
+      border-color: rgba(15, 23, 42, 0.22);
+    }
+
+    /* ── BOTTOM BAR (Premium Glass) ─────────── */
+    #bottom-banner {
+      position: absolute;
+      bottom: calc(16px + env(safe-area-inset-bottom));
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--surface-2);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid var(--glass-border);
+      border-radius: 30px;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      padding: 0 16px;
+      gap: 12px;
+      z-index: 100;
+      box-shadow: var(--shadow-soft);
+    }
+
+    .icon-btn {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-md);
+      color: rgba(255, 255, 255, 0.8);
+      cursor: pointer;
+      width: 48px;
+      height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform var(--motion-fast) var(--motion-spring), background-color var(--motion-base) ease, border-color var(--motion-base) ease, box-shadow var(--motion-base) ease, color var(--motion-base) ease;
+      flex-shrink: 0;
+    }
+
+    body.theme-light .icon-btn {
+      color: rgba(15, 23, 42, 0.82);
+      background: rgba(255, 255, 255, 0.9);
+      border-color: rgba(15, 23, 42, 0.14);
+    }
+
+    .icon-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+      transform: translateY(-2px) scale(1.02);
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.24);
+    }
+
+    body.theme-light .icon-btn:hover {
+      background: rgba(255, 255, 255, 0.98);
+      box-shadow: 0 10px 24px rgba(15, 23, 42, 0.18);
+    }
+
+    .icon-btn:active {
+      transform: scale(0.9);
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    body.theme-light .icon-btn:active {
+      background: rgba(15, 23, 42, 0.08);
+    }
+
+    .icon-btn:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+      transform: none;
+      background: rgba(148, 163, 184, 0.14);
+      border-color: rgba(148, 163, 184, 0.5);
+      color: rgba(255, 255, 255, 0.5);
+    }
+
+    .icon-btn.muted {
+      color: rgba(255, 255, 255, 0.3);
+    }
+
+    .icon-btn:focus-visible,
+    .theme-toggle:focus-visible,
+    .help-trigger:focus-visible,
+    .win-next-btn:focus-visible,
+    .lm-close:focus-visible,
+    .lm-page-btn:focus-visible,
+    .lm-btn:focus-visible {
+      outline: 3px solid #FFFFFF;
+      outline-offset: 3px;
+      box-shadow: 0 0 0 6px rgba(0, 210, 255, 0.35), 0 0 0 10px rgba(255, 255, 255, 0.14);
+    }
+
+    .hint-btn .count {
+      position: absolute;
+      top: -6px;
+      right: -6px;
+      background: var(--accent);
+      color: #fff;
+      font-size: 10px;
+      font-weight: 800;
+      padding: 2px 6px;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(255, 81, 47, 0.4);
+    }
+
+    /* ── WIN OVERLAY (Ultra Premium) ─────────────────── */
+    #win-overlay {
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(circle at center, rgba(15, 23, 42, 0.9) 0%, rgba(0, 0, 0, 0.95) 100%);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity var(--motion-base) ease;
+    }
+
+    #win-overlay.active {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .win-card {
+      background: rgba(30, 41, 59, 0.7);
+      backdrop-filter: blur(30px);
+      -webkit-backdrop-filter: blur(30px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 48px;
+      padding: 56px 40px 40px;
+      text-align: center;
+      max-width: 340px;
+      width: 90%;
+      transform: translateY(60px) scale(0.9);
+      transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+    }
+
+    .win-card.perfect {
+      border-color: rgba(255, 215, 0, 0.38);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), 0 0 42px rgba(255, 215, 0, 0.28), inset 0 0 0 1px rgba(255, 255, 255, 0.09);
+    }
+
+    #win-overlay.active .win-card {
+      transform: translateY(0) scale(1);
+    }
+
+    .win-emoji {
+      font-size: 96px;
+      margin-bottom: 24px;
+      filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.3));
+    }
+
+    .win-title {
+      font-size: 40px;
+      font-weight: 900;
+      color: #FFFFFF;
+      margin-bottom: 12px;
+      letter-spacing: -1px;
+    }
+
+    .win-sub {
+      font-size: 17px;
+      color: var(--muted);
+      margin-bottom: 20px;
+      line-height: 1.5;
+    }
+
+    .win-level-line {
+      margin-bottom: 8px;
+      opacity: 0.8;
+    }
+
+    .win-moves-line {
+      font-size: 1.4rem;
+      font-weight: 900;
+      color: var(--text);
+    }
+
+    .win-par-line {
+      font-size: 0.9rem;
+      opacity: 0.58;
+    }
+
+    .win-perfect-line {
+      color: #FFD700;
+      font-weight: 900;
+      margin-top: 15px;
+      font-size: 1.02rem;
+      letter-spacing: 1.6px;
+      animation: bounce 0.8s infinite alternate;
+    }
+
+    .win-stars {
+      font-size: 42px;
+      margin-bottom: 40px;
+      filter: drop-shadow(0 0 15px rgba(255, 215, 0, 0.4));
+    }
+
+    .win-stars-grid {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+    }
+
+    .win-star {
+      font-size: 56px;
+      opacity: 0;
+      transform: scale(2) rotate(-90deg);
+      filter: drop-shadow(0 0 20px rgba(255, 215, 0, 0));
+      transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.5), opacity 0.4s ease, filter 0.5s ease;
+    }
+
+    .win-star.earned {
+      opacity: 1;
+      transform: scale(1) rotate(0deg);
+      filter: drop-shadow(0 0 25px rgba(255, 215, 0, 0.6));
+    }
+
+    .win-star.earned.pop {
+      transform: scale(1.2);
+    }
+
+    .win-star.muted {
+      opacity: 0.15;
+      transform: scale(0.8) rotate(0deg);
+      filter: grayscale(1);
+    }
+
+    .win-next-btn {
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      color: white;
+      border: none;
+      border-radius: 24px;
+      padding: 20px 32px;
+      font-size: 20px;
+      font-weight: 800;
+      cursor: pointer;
+      width: 100%;
+      transition: transform var(--motion-fast) var(--motion-spring), box-shadow var(--motion-base) ease, filter var(--motion-base) ease;
+      letter-spacing: 1px;
+      box-shadow: 0 12px 30px rgba(0, 210, 255, 0.3);
+    }
+
+    .win-next-btn:hover {
+      transform: translateY(-3px) scale(1.02);
+      box-shadow: 0 15px 40px rgba(0, 210, 255, 0.4);
+    }
+
+    .win-next-btn:active {
+      transform: scale(0.96);
+    }
+
+    /* ── LEVEL MENU OVERLAY ── */
+    #level-menu-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(11, 15, 26, 0.95);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      z-index: 300;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px 14px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.24s ease;
+    }
+
+    #level-menu-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .lm-card {
+      width: min(460px, 100%);
+      max-height: 100%;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background: rgba(11, 15, 26, 0.88);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 28px;
+      box-shadow: 0 24px 56px rgba(0, 0, 0, 0.45);
+    }
+
+    .lm-header {
+      padding: 64px 32px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      opacity: 0;
+      transform: translateY(-12px);
+      transition: transform 0.24s ease, opacity 0.22s ease;
+    }
+
+    .lm-title {
+      font-size: 22px;
+      font-weight: 900;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      background: linear-gradient(to right, #fff, rgba(255, 255, 255, 0.5));
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .lm-close {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      color: white;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .lm-close:hover {
+      background: rgba(255, 255, 255, 0.1);
+      transform: rotate(90deg);
+    }
+
+    .lm-content {
+      flex: 1;
+      padding: 32px;
+      overflow-y: auto;
+      display: flex;
+      justify-content: center;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: transform 0.28s ease, opacity 0.25s ease;
+    }
+
+    .lm-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+      max-width: 400px;
+      width: 100%;
+      height: fit-content;
+    }
+
+    .lm-btn {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 20px;
+      aspect-ratio: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      color: white;
+      cursor: pointer;
+      opacity: 0;
+      transform: translateY(12px) scale(0.97);
+      transition:
+        transform 0.24s cubic-bezier(0.2, 0.8, 0.2, 1),
+        opacity 0.2s ease,
+        background-color 0.2s ease,
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
+      transition-delay: var(--tile-delay, 0ms);
+      will-change: transform, opacity;
+    }
+
+    .lm-grid.enter .lm-btn {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+
+    .lm-btn:hover:not(.locked) {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: var(--primary);
+      transform: scale(1.05);
+    }
+
+    .lm-btn.unlocked {
+      background: rgba(0, 210, 255, 0.1);
+      border-color: var(--primary);
+      box-shadow: 0 0 20px rgba(0, 210, 255, 0.2);
+    }
+
+    .lm-btn.passed {
+      opacity: 0.8;
+    }
+
+    .lm-btn.locked {
+      opacity: 0.62;
+      cursor: not-allowed;
+      filter: grayscale(0.35) saturate(0.85);
+      background: rgba(148, 163, 184, 0.14);
+      border-color: rgba(148, 163, 184, 0.5);
+      color: rgba(255, 255, 255, 0.8);
+    }
+
+    .lm-num {
+      font-size: 24px;
+      font-weight: 900;
+    }
+
+    .lm-stars {
+      font-size: 10px;
+      margin-top: 4px;
+    }
+
+    .lm-footer {
+      padding: 32px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(0, 0, 0, 0.2);
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      padding-bottom: calc(32px + env(safe-area-inset-bottom));
+      opacity: 0;
+      transform: translateY(12px);
+      transition: transform 0.24s ease, opacity 0.22s ease;
+    }
+
+    #level-menu-overlay.active .lm-header,
+    #level-menu-overlay.active .lm-content,
+    #level-menu-overlay.active .lm-footer {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .hint-btn {
+      position: relative;
+    }
+
+    @keyframes hintPulse {
+      0% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(0, 210, 255, 0.26);
+      }
+
+      70% {
+        transform: scale(1.04);
+        box-shadow: 0 0 0 10px rgba(0, 210, 255, 0);
+      }
+
+      100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(0, 210, 255, 0);
+      }
+    }
+
+    .hint-btn.pulsing:not(:disabled) {
+      animation: hintPulse 1.25s ease-out infinite;
+    }
+
+    .hint-btn.is-warning {
+      background: linear-gradient(135deg, var(--accent), #ff7c5f);
+      border-color: rgba(255, 255, 255, 0.3);
+      color: #fff;
+      box-shadow: 0 0 0 4px rgba(255, 81, 47, 0.2);
+    }
+
+    .hint-btn.is-warning .count {
+      background: rgba(255, 255, 255, 0.92);
+      color: #b42318;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      body::before,
+      .icon-btn,
+      .theme-toggle,
+      .help-trigger,
+      .win-card,
+      .win-next-btn,
+      .win-star,
+      #top-utilities-tray,
+      .lm-btn,
+      .lm-header,
+      .lm-content,
+      .lm-footer,
+      .hint-btn.pulsing:not(:disabled) {
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+      }
+    }
+
+    .lm-page-btn {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 22px;
+      padding: 14px 28px;
+      color: white;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .lm-page-btn:hover:not(:disabled) {
+      background: rgba(255, 255, 255, 0.1);
+      transform: translateY(-2px);
+    }
+
+    .lm-page-btn:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .lm-page-btn[aria-disabled='true'] {
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
+
+    @media (max-width: 420px) {
+      #top-hud {
+        left: calc(8px + env(safe-area-inset-left));
+        right: calc(8px + env(safe-area-inset-right));
+        column-gap: 6px;
+        row-gap: 6px;
+      }
+
+      .hud-pill {
+        border-radius: 12px;
+        padding: 5px 8px;
+        min-height: 30px;
+      }
+
+      .hud-label {
+        font-size: 9px;
+      }
+
+      .hud-value {
+        font-size: 12px;
+      }
+    }
+
+    #top-hud.compact .hud-pill {
+      padding: 5px 8px;
+      min-height: 30px;
+      border-radius: var(--radius-sm);
+      gap: 5px;
+    }
+
+    #top-hud.compact {
+      column-gap: 6px;
+      row-gap: 6px;
+    }
+
+    #top-hud.compact .hud-label {
+      font-size: 9px;
+    }
+
+    #top-hud.compact .hud-value {
+      font-size: 12px;
+    }
+
+    #top-hud.ultra-compact #hud-pill-target,
+    #top-hud.ultra-compact #hud-pill-hints,
+    #top-hud.ultra-compact #hud-pill-stars,
+    #top-hud.ultra-compact .challenge-timer {
+      display: none;
+    }
+
+    #top-hud.ultra-compact {
+      justify-content: flex-start;
+      overflow-x: auto;
+      flex-wrap: nowrap;
+      padding-bottom: 4px;
+    }
+
+    #top-utilities-tray {
+      position: absolute;
+      top: calc(46px + env(safe-area-inset-top));
+      left: calc(12px + env(safe-area-inset-left));
+      right: calc(12px + env(safe-area-inset-right));
+      z-index: 118;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      justify-content: flex-start;
+      opacity: 0;
+      transform: translateY(-8px);
+      pointer-events: none;
+      transition: opacity var(--motion-fast) ease, transform var(--motion-fast) ease;
+    }
+
+    #top-utilities-tray.open {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+
+    #top-utilities-tray .hud-pill {
+      min-height: 30px;
+      padding: 5px 8px;
+      border-radius: 12px;
+      background: var(--hud-bg);
+    }
+
+    #top-utilities-tray .hud-label {
+      font-size: 9px;
+    }
+
+    #top-utilities-tray .hud-value {
+      font-size: 12px;
+    }
+
+    #top-hud.compact #top-menu-toggle {
+      min-height: 30px;
+      padding: 5px 8px;
+    }
+
+    #top-hud.ultra-compact #top-menu-toggle {
+      margin-left: 0;
+    }
+
+    body.utilities-open #progress-container {
+      top: calc(136px + env(safe-area-inset-top));
+    }
+
+    body.theme-light #top-utilities-tray .hud-value,
+    body.theme-light #top-utilities-tray .hud-label,
+    body.theme-light .hud-value {
+      text-shadow: none;
+    }
+
+    #bottom-banner.compact {
+      height: 58px;
+      padding: 0 12px;
+      gap: 8px;
+      border-radius: 24px;
+      bottom: calc(10px + env(safe-area-inset-bottom));
+    }
+
+    #bottom-banner.compact .icon-btn {
+      width: 42px;
+      height: 42px;
+    }
+
+    @keyframes bounce {
+      from {
+        transform: translateY(0);
+      }
+
+      to {
+        transform: translateY(-10px);
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div id="game-root">
+    <div id="top-hud" aria-live="polite">
+      <div class="hud-pill" id="hud-pill-world">
+        <span class="hud-label">World</span>
+        <span class="hud-value" id="hud-world-level">W1 • L1</span>
+      </div>
+      <div class="hud-pill" id="hud-pill-moves">
+        <span class="hud-label">Moves</span>
+        <span class="hud-value" id="hud-moves-par">0 / PAR 0</span>
+      </div>
+      <div class="hud-pill" id="hud-pill-target">
+        <span class="hud-label">Target</span>
+        <span class="hud-value" id="hud-target">0L</span>
+      </div>
+      <div class="hud-pill" id="hud-pill-hints">
+        <span class="hud-label">Hints</span>
+        <span class="hud-value" id="hud-hints">0</span>
+      </div>
+      <div class="hud-pill" id="hud-pill-stars">
+        <span class="hud-label">Stars</span>
+        <span class="hud-value" id="hud-stars">0</span>
+      </div>
+      <button class="hud-pill hud-menu-toggle" id="top-menu-toggle" type="button" aria-label="Toggle utility menu"
+        aria-expanded="false" aria-controls="top-utilities-tray">
+        <span class="hud-label">Menu</span>
+        <span class="hud-value">☰</span>
+      </button>
+    </div>
+    <div id="top-utilities-tray" aria-hidden="true"></div>
+    <canvas id="gameCanvas"></canvas>
+
+    <div id="bottom-banner">
+      <!-- Menu -->
+      <button class="icon-btn" id="menu-btn" type="button" title="Levels" aria-label="Open level menu"
+        aria-haspopup="dialog" aria-controls="level-menu-overlay">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+          stroke-linecap="round" stroke-linejoin="round">
+          <line x1="3" y1="12" x2="21" y2="12"></line>
+          <line x1="3" y1="6" x2="21" y2="6"></line>
+          <line x1="3" y1="18" x2="21" y2="18"></line>
+        </svg>
+      </button>
+
+      <!-- Undo -->
+      <button class="icon-btn" id="undo-btn" type="button" title="Undo" aria-label="Undo move">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+          stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="11 7 5 12 11 17" />
+          <line x1="19" y1="12" x2="6" y2="12" />
+        </svg>
+      </button>
+
+      <!-- Restart -->
+      <button class="icon-btn" id="restart-btn" type="button" title="Restart" aria-label="Restart level">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+          stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="1 4 1 10 7 10" />
+          <path d="M3.51 15a9 9 0 1 0 .49-4.5" />
+        </svg>
+      </button>
+
+      <!-- Hint -->
+      <button class="icon-btn hint-btn" id="hint-btn" type="button" title="Hint" aria-label="Use hint">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+          stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2a7 7 0 0 1 4 12.7V17a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-2.3A7 7 0 0 1 12 2z" />
+          <line x1="9" y1="21" x2="15" y2="21" />
+        </svg>
+        <span class="count" id="hint-count">FREE</span>
+      </button>
+
+      <!-- Sound -->
+      <button class="icon-btn" id="sound-btn" type="button" title="Sound" aria-label="Toggle sound"
+        aria-pressed="true">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+          stroke-linecap="round" stroke-linejoin="round" class="sound-on">
+          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+          <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Win Overlay -->
+  <div id="win-overlay" role="dialog" aria-modal="true" aria-labelledby="win-title" aria-describedby="win-sub"
+    aria-hidden="true" tabindex="-1">
+    <div class="win-card">
+      <div class="win-emoji" id="win-emoji">🎉</div>
+      <div class="win-title" id="win-title">Level Cleared!</div>
+      <div class="win-sub" id="win-sub">Solved in 7 moves</div>
+      <div class="win-stars" id="win-stars">⭐⭐⭐</div>
+      <button class="win-next-btn" id="win-next-btn" type="button">Next Level →</button>
+    </div>
+  </div>
+
+  <!-- Level Menu Overlay -->
+  <div id="level-menu-overlay" role="dialog" aria-modal="true" aria-labelledby="lm-title" aria-hidden="true"
+    tabindex="-1">
+    <div class="lm-card" id="lm-card">
+      <div class="lm-header">
+        <div class="lm-title" id="lm-title">WORLD 1</div>
+        <button class="lm-close" id="lm-close" type="button" aria-label="Close level menu">&times;</button>
+      </div>
+      <div class="lm-content">
+        <div class="lm-grid" id="lm-grid">
+          <!-- Injected via JS -->
+        </div>
+      </div>
+      <div class="lm-footer">
+        <button class="lm-page-btn" id="lm-prev-btn" type="button" aria-label="Previous level page" disabled
+          aria-disabled="true">&lt; PREV</button>
+        <div class="lm-page-info" id="lm-page-info">1 / 50</div>
+        <button class="lm-page-btn" id="lm-next-btn" type="button" aria-label="Next level page">NEXT &gt;</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="levels.js"></script>
+  <!-- Phase 1: Core UX & UI -->
+  <script src="tutorial.js"></script>
+  <script src="help.js"></script>
+  <script src="feedback.js"></script>
+  <script src="progress.js"></script>
+  <script src="dialogs.js"></script>
+  <script src="responsive.js"></script>
+  <script src="themes.js"></script>
+  <script src="buttons.js"></script>
+  <script src="transitions.js"></script>
+  
+  <!-- Phase 2: Game Mechanics & Visual Polish -->
+  <script src="difficulty.js"></script>
+  <script src="liveops-config.js"></script>
+  <script src="daily.js"></script>
+  <script src="achievements.js"></script>
+  <script src="animations.js"></script>
+  <script src="particles.js"></script>
+  
+  <!-- Phase 3: Performance & PWA -->
+  <script src="performance.js"></script>
+  
+  <!-- Phase 4: Advanced Mechanics & Social -->
+  <script src="advanced-mechanics.js"></script>
+  <script src="analytics.js"></script>
+  <script src="social.js"></script>
+  <script src="monetization.js"></script>
+  <script src="missions.js"></script>
+  
+  <!-- Phase 5: QA & Launch -->
+  <script src="qa.js"></script>
+  <script src="launch.js"></script>
+  
+  <!-- Main Game -->
+  <script src="main.js"></script>
+  
+  <!-- Service Worker Registration -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+          .then((registration) => {
+            console.log('SW registered:', registration.scope);
+          })
+          .catch((error) => {
+            console.log('SW registration failed:', error);
+          });
+      });
+    }
+  </script>
+</body>
+
+</html>

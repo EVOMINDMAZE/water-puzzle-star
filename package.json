@@ -1,0 +1,23 @@
+{
+  "name": "water-puzzle-star",
+  "version": "1.0.0",
+  "description": "A browser-based water sorting puzzle game where players transfer colored liquids between bottles to sort them by color.",
+  "main": "main.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "http-server . -a 127.0.0.1 -p 4174 -c-1",
+    "start": "npm run dev",
+    "test:ux": "node test-artifacts/ux-regression-test.js",
+    "test:task5": "node test-artifacts/task5-validation.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "http-server": "^14.1.1",
+    "playwright": "^1.58.2"
+  }
+}

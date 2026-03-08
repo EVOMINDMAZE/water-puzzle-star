@@ -1,0 +1,12 @@
+- [x] Top HUD cards never overlap each other at supported widths.
+- [x] Top HUD never overlaps bottle outlines, fills, or labels.
+- [x] Bottle columns keep minimum horizontal spacing at all tested levels.
+- [x] Bottle heights and baseline remain inside viewport-safe drawing bounds.
+- [x] Target line label never overlaps HUD rows.
+- [x] Target line label remains fully visible inside canvas edges.
+- [x] Bottom action bar remains unobstructed by bottle rendering.
+- [x] Compact viewport layout (portrait mobile) is readable and non-overlapping.
+- [x] Wide viewport layout (desktop) is readable and non-overlapping.
+- [x] Menu interactions still open/close correctly after layout changes.
+- [x] Hint visuals and lifecycle still work after layout changes.
+- [x] UX regression test script passes without new failures.

@@ -1,0 +1,13 @@
+node_modules/
+npm-debug.log*
+.DS_Store
+
+test-artifacts/**/*.png
+test-artifacts/**/report.json
+test-artifacts/run-*/
+test-artifacts/task4-manual-*/
+test-artifacts/task5-manual-*/
+test-artifacts/task5-validation-*/
+test-artifacts/rapid-overlay-*/
+test-artifacts/light-theme-check-*/
+test-artifacts/undo-icon-validation-*/

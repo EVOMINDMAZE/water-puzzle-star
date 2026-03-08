@@ -1,0 +1,12 @@
+- [x] Valid pour no longer lifts or tilts bottles through a travel animation.
+- [x] Valid pour updates source/destination amounts immediately and correctly.
+- [x] Move counter/history behavior remains correct after animation removal.
+- [x] Source bottle highlight appears briefly on valid transfer.
+- [x] Destination bottle highlight appears briefly on valid transfer.
+- [x] Transfer streak/ripple cue appears and fades cleanly.
+- [x] Invalid pour feedback remains clear and does not trigger transfer cue.
+- [x] New feedback does not overlap HUD, target line text, or bottom controls.
+- [x] Classic mode readability is improved versus previous motion-heavy feedback.
+- [x] Hint, menu, and win overlay interactions still work as expected.
+- [x] UX regression suite passes with no new failures.
+- [x] Portrait and landscape manual checks confirm smooth and readable behavior.
