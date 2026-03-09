@@ -1976,6 +1976,11 @@ window.addEventListener('themeChange', (e) => {
   applyCanvasTheme(themeName, e?.detail?.colors || {});
 });
 
+window.addEventListener('monetizationEvent', () => {
+  refreshEconomyFromStorage();
+  updateHUD();
+});
+
 document.addEventListener('DOMContentLoaded', () => {
   if (window.ThemeSystem && typeof window.ThemeSystem.getTheme === 'function' && typeof window.ThemeSystem.getThemeColors === 'function') {
     applyCanvasTheme(window.ThemeSystem.getTheme(), window.ThemeSystem.getThemeColors() || {});

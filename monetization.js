@@ -139,6 +139,14 @@ class MonetizationSystem {
     return '';
   }
 
+  getPathMode() {
+    if (typeof window === 'undefined' || !window.location || typeof window.location.pathname !== 'string') return '';
+    const path = window.location.pathname.trim().toLowerCase();
+    if (path === '/vip' || path === '/vip/') return 'adfree';
+    if (path === '/play' || path === '/play/') return 'ads';
+    return '';
+  }
+
   getInviteTokenFromQuery() {
     const token = this.getQueryParams().get('invite');
     if (!token || typeof token !== 'string') return '';
@@ -204,6 +212,13 @@ class MonetizationSystem {
     }
     if (queryMode === 'adfree' && !options.ignoreQueryAdfree) {
       return this.buildResolution('adfree', 'query_mode', 'explicit_adfree_mode');
+    }
+    const pathMode = this.getPathMode();
+    if (pathMode === 'adfree') {
+      return this.buildResolution('adfree', 'path_mode', 'vip_path_mode');
+    }
+    if (pathMode === 'ads') {
+      return this.buildResolution('ads', 'path_mode', 'play_path_mode');
     }
     const persistedGrant = this.getPersistedAdModeGrant();
     if (persistedGrant) {
